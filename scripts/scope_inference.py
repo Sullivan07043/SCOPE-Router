@@ -60,12 +60,12 @@ from config.model_pools import (
     load_custom_pool,
 )
 
-# Configuration
-SCOPE_MODEL = "Cooolder/SCOPE-CoT-RL-v3"
-NUM_ANCHOR_EXAMPLES = 5  # Number of anchor examples in prompt
-TOP_K_SIMILARITY = 10    # Top-K similar anchors to consider
-MAX_NEW_TOKENS = 2048
-TEMPERATURE = 0.7
+# Default Configuration
+DEFAULT_SCOPE_MODEL = "Cooolder/SCOPE-CoT-RL-v3"
+DEFAULT_NUM_ANCHOR_EXAMPLES = 5  # Number of anchor examples in prompt
+DEFAULT_TOP_K_SIMILARITY = 10    # Top-K similar anchors to consider
+DEFAULT_MAX_NEW_TOKENS = 2048
+DEFAULT_TEMPERATURE = 0.7
 
 
 def load_custom_queries(filepath: str) -> List[Dict]:
@@ -231,7 +231,8 @@ def build_scope_prompt(
     target_question: str,
     target_model: str,
     anchor_examples: List[Dict],
-    anchor_performance: Dict[str, Dict[str, Dict]]
+    anchor_performance: Dict[str, Dict[str, Dict]],
+    num_anchor_examples: int = DEFAULT_NUM_ANCHOR_EXAMPLES
 ) -> str:
     """
     Build SCOPE-RL-data-v3 format prompt.
@@ -243,6 +244,7 @@ def build_scope_prompt(
         target_model: The target model name (OpenRouter ID format)
         anchor_examples: List of similar anchor questions with metadata
         anchor_performance: {anchor_id: {model_name: {'is_correct': bool, 'token_count': int}}}
+        num_anchor_examples: Number of anchor examples to include in prompt
     
     Returns:
         Formatted prompt string
@@ -251,7 +253,7 @@ def build_scope_prompt(
     
     # Build anchor examples section
     examples_text = ""
-    for i, anchor in enumerate(anchor_examples[:NUM_ANCHOR_EXAMPLES], 1):
+    for i, anchor in enumerate(anchor_examples[:num_anchor_examples], 1):
         anchor_id = anchor['anchor_id']
         anchor_question = anchor.get('anchor_question', '')
         
@@ -274,7 +276,7 @@ Performance: {{len: {token_count}, correct: {correct_str}}}
     
     # Build the full prompt - matches SCOPE-RL-data-v3 format exactly
     prompt = f"""### Task
-You are a performance prediction expert. Given a target question, {NUM_ANCHOR_EXAMPLES} anchor questions with their performance results, and a target AI model, predict how the model will perform on the target question, specifically the output length and correctness after related reasoning analysis.
+You are a performance prediction expert. Given a target question, {num_anchor_examples} anchor questions with their performance results, and a target AI model, predict how the model will perform on the target question, specifically the output length and correctness after related reasoning analysis.
 
 ### Target Model
 {target_model}
@@ -346,9 +348,9 @@ def calculate_cost(prompt_tokens: int, completion_tokens: int, model_name: str) 
 
 def run_vllm_inference(
     prompts: List[str],
-    model_name: str = SCOPE_MODEL,
-    max_tokens: int = MAX_NEW_TOKENS,
-    temperature: float = TEMPERATURE,
+    model_name: str = DEFAULT_SCOPE_MODEL,
+    max_tokens: int = DEFAULT_MAX_NEW_TOKENS,
+    temperature: float = DEFAULT_TEMPERATURE,
     tensor_parallel_size: int = 1
 ) -> List[str]:
     """
@@ -593,12 +595,50 @@ def main():
         help="Use CPU for embedding model"
     )
     
+    # SCOPE model and prompt parameters
+    parser.add_argument(
+        "--scope_model",
+        type=str,
+        default=DEFAULT_SCOPE_MODEL,
+        help=f"SCOPE model to use (default: {DEFAULT_SCOPE_MODEL})"
+    )
+    parser.add_argument(
+        "--num_anchor_examples",
+        type=int,
+        default=DEFAULT_NUM_ANCHOR_EXAMPLES,
+        help=f"Number of anchor examples in prompt (default: {DEFAULT_NUM_ANCHOR_EXAMPLES})"
+    )
+    parser.add_argument(
+        "--top_k_similarity",
+        type=int,
+        default=DEFAULT_TOP_K_SIMILARITY,
+        help=f"Top-K similar anchors to consider (default: {DEFAULT_TOP_K_SIMILARITY})"
+    )
+    parser.add_argument(
+        "--max_new_tokens",
+        type=int,
+        default=DEFAULT_MAX_NEW_TOKENS,
+        help=f"Maximum new tokens to generate (default: {DEFAULT_MAX_NEW_TOKENS})"
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=DEFAULT_TEMPERATURE,
+        help=f"Sampling temperature (default: {DEFAULT_TEMPERATURE})"
+    )
+    
     args = parser.parse_args()
     
     print("="*70)
     print("SCOPE Router Inference Pipeline")
     print("="*70)
     print(f"Output: {args.output}")
+    print(f"\nConfiguration:")
+    print(f"  SCOPE model: {args.scope_model}")
+    print(f"  Num anchor examples: {args.num_anchor_examples}")
+    print(f"  Top-K similarity: {args.top_k_similarity}")
+    print(f"  Max new tokens: {args.max_new_tokens}")
+    print(f"  Temperature: {args.temperature}")
     
     # Determine model pool
     if args.model_pool:
@@ -698,7 +738,7 @@ def main():
     similarity_results = compute_similarities(
         query_embeddings, anchor_embeddings,
         unique_questions, anchor_data,
-        top_k=TOP_K_SIMILARITY
+        top_k=args.top_k_similarity
     )
     
     # Build similarity lookup
@@ -734,7 +774,8 @@ def main():
                 target_question=question['prompt'],
                 target_model=model_id,
                 anchor_examples=similar_anchors,
-                anchor_performance=anchor_performance
+                anchor_performance=anchor_performance,
+                num_anchor_examples=args.num_anchor_examples
             )
             
             prompts.append(prompt)
@@ -749,7 +790,9 @@ def main():
     
     outputs = run_vllm_inference(
         prompts,
-        model_name=SCOPE_MODEL,
+        model_name=args.scope_model,
+        max_tokens=args.max_new_tokens,
+        temperature=args.temperature,
         tensor_parallel_size=args.tensor_parallel
     )
     

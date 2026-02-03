@@ -112,6 +112,11 @@ python scope_inference.py \
 | `--similarity_output` | Save similarity results | None |
 | `--tensor_parallel` | Number of GPUs for VLLM | 1 |
 | `--limit` | Limit questions for testing | None |
+| `--scope_model` | SCOPE predictor model | `Cooolder/SCOPE-CoT-RL-v3` |
+| `--num_anchor_examples` | Number of anchor examples in prompt | 5 |
+| `--top_k_similarity` | Top-K similar anchors to consider | 10 |
+| `--max_new_tokens` | Maximum tokens to generate | 2048 |
+| `--temperature` | Sampling temperature | 0.7 |
 
 ### 2. Two-Stage Routing (`two_stage_routing.py`)
 
@@ -146,6 +151,10 @@ python two_stage_routing.py \
 | `--dataset` | Dataset type for anchor data | `id` |
 | `--output` | Output routing results JSON | `routing_results.json` |
 | `--alpha_steps` | Number of alpha values to search | 101 |
+| `--top_k` | Number of anchor questions for Stage I | 10 |
+| `--similarity_power` | Power for similarity weighting | 2.0 |
+| `--cost_sensitivity` | Cost sensitivity parameter | 2.0 |
+| `--stage1_weight` | Weight for Stage I vs Stage II | 0.3 |
 
 ### 3. Custom Model Pool (`inference_anchor.py`)
 

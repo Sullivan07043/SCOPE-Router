@@ -54,10 +54,11 @@ from compute_similarity import (
     TOP_K,
 )
 
-# Configuration
-SIMILARITY_POWER = 2.0   # Power for similarity weighting
-COST_SENSITIVITY = 2.0   # Cost sensitivity parameter
-STAGE1_WEIGHT = 0.3      # Weight for Stage I (anchor calibration)
+# Default Configuration
+DEFAULT_TOP_K = 10           # Number of anchor questions to use
+DEFAULT_SIMILARITY_POWER = 2.0   # Power for similarity weighting
+DEFAULT_COST_SENSITIVITY = 2.0   # Cost sensitivity parameter
+DEFAULT_STAGE1_WEIGHT = 0.3      # Weight for Stage I (anchor calibration)
 
 
 def load_selection_data(filepath: str) -> Dict:
@@ -134,8 +135,8 @@ def normalize_model_name(name: str) -> str:
 def compute_anchor_statistics(
     similarity_data: List[Dict],
     anchor_performance: Dict[str, Dict[str, Dict]],
-    top_k: int = 10,
-    similarity_power: float = SIMILARITY_POWER
+    top_k: int = DEFAULT_TOP_K,
+    similarity_power: float = DEFAULT_SIMILARITY_POWER
 ) -> Dict[str, Dict[str, Dict]]:
     """
     Stage I: Compute weighted anchor statistics for each question.
@@ -222,8 +223,8 @@ def two_stage_routing(
     selection_data: Dict,
     normalized_stats: Dict[str, Dict[str, Dict]],
     alpha: float = 0.5,
-    cost_sensitivity: float = COST_SENSITIVITY,
-    stage1_weight: float = STAGE1_WEIGHT
+    cost_sensitivity: float = DEFAULT_COST_SENSITIVITY,
+    stage1_weight: float = DEFAULT_STAGE1_WEIGHT
 ) -> Dict:
     """
     Stage II: Online routing combining anchor stats and predictions.
@@ -376,7 +377,9 @@ def two_stage_routing(
 def compute_pareto_curve(
     selection_data: Dict,
     normalized_stats: Dict[str, Dict[str, Dict]],
-    alpha_values: np.ndarray = None
+    alpha_values: np.ndarray = None,
+    cost_sensitivity: float = DEFAULT_COST_SENSITIVITY,
+    stage1_weight: float = DEFAULT_STAGE1_WEIGHT
 ) -> List[Tuple[float, float, float]]:
     """
     Compute Pareto frontier curve by varying alpha.
@@ -397,8 +400,8 @@ def compute_pareto_curve(
         result = two_stage_routing(
             selection_data, normalized_stats,
             alpha=alpha,
-            cost_sensitivity=COST_SENSITIVITY,
-            stage1_weight=STAGE1_WEIGHT
+            cost_sensitivity=cost_sensitivity,
+            stage1_weight=stage1_weight
         )
         
         curve_points.append((
@@ -468,6 +471,32 @@ def main():
         help="Number of alpha values to search (default: 101 for 0.01 precision)"
     )
     
+    # Routing algorithm parameters
+    parser.add_argument(
+        "--top_k",
+        type=int,
+        default=DEFAULT_TOP_K,
+        help=f"Number of anchor questions to use in Stage I (default: {DEFAULT_TOP_K})"
+    )
+    parser.add_argument(
+        "--similarity_power",
+        type=float,
+        default=DEFAULT_SIMILARITY_POWER,
+        help=f"Power for similarity weighting in Stage I (default: {DEFAULT_SIMILARITY_POWER})"
+    )
+    parser.add_argument(
+        "--cost_sensitivity",
+        type=float,
+        default=DEFAULT_COST_SENSITIVITY,
+        help=f"Cost sensitivity parameter for routing (default: {DEFAULT_COST_SENSITIVITY})"
+    )
+    parser.add_argument(
+        "--stage1_weight",
+        type=float,
+        default=DEFAULT_STAGE1_WEIGHT,
+        help=f"Weight for Stage I anchor calibration vs Stage II prediction (default: {DEFAULT_STAGE1_WEIGHT})"
+    )
+    
     args = parser.parse_args()
     
     print("="*70)
@@ -503,11 +532,18 @@ def main():
     # Load anchor performance
     anchor_performance = load_anchor_performance(args.dataset)
     
+    # Display configuration
+    print(f"\nRouting Configuration:")
+    print(f"  Top-K anchors: {args.top_k}")
+    print(f"  Similarity power: {args.similarity_power}")
+    print(f"  Cost sensitivity: {args.cost_sensitivity}")
+    print(f"  Stage I weight: {args.stage1_weight}")
+    
     # Compute Stage I statistics
     normalized_stats = compute_anchor_statistics(
         similarity_data, anchor_performance,
-        top_k=TOP_K,
-        similarity_power=SIMILARITY_POWER
+        top_k=args.top_k,
+        similarity_power=args.similarity_power
     )
     
     # Run routing
@@ -515,13 +551,21 @@ def main():
         # Single alpha value specified
         result = two_stage_routing(
             selection_data, normalized_stats,
-            alpha=args.alpha
+            alpha=args.alpha,
+            cost_sensitivity=args.cost_sensitivity,
+            stage1_weight=args.stage1_weight
         )
         
         output = {
             'method': selection_data.get('method', 'SCOPE'),
             'dataset': args.dataset,
             'alpha': args.alpha,
+            'config': {
+                'top_k': args.top_k,
+                'similarity_power': args.similarity_power,
+                'cost_sensitivity': args.cost_sensitivity,
+                'stage1_weight': args.stage1_weight,
+            },
             'result': result
         }
         
@@ -545,7 +589,9 @@ def main():
         for alpha in alpha_values:
             result = two_stage_routing(
                 selection_data, normalized_stats,
-                alpha=alpha
+                alpha=alpha,
+                cost_sensitivity=args.cost_sensitivity,
+                stage1_weight=args.stage1_weight
             )
             pareto_points.append({
                 'alpha': alpha,
@@ -575,7 +621,9 @@ def main():
         # Get full result for best alpha
         final_result = two_stage_routing(
             selection_data, normalized_stats,
-            alpha=best_point['alpha']
+            alpha=best_point['alpha'],
+            cost_sensitivity=args.cost_sensitivity,
+            stage1_weight=args.stage1_weight
         )
         
         output = {
@@ -583,6 +631,12 @@ def main():
             'dataset': args.dataset,
             'budget': args.budget,
             'optimal_alpha': best_point['alpha'],
+            'config': {
+                'top_k': args.top_k,
+                'similarity_power': args.similarity_power,
+                'cost_sensitivity': args.cost_sensitivity,
+                'stage1_weight': args.stage1_weight,
+            },
             'result': final_result,
             'pareto_curve': [
                 {'alpha': p['alpha'], 'accuracy': p['accuracy'], 
@@ -606,7 +660,9 @@ def main():
         for alpha in alpha_values:
             result = two_stage_routing(
                 selection_data, normalized_stats,
-                alpha=alpha
+                alpha=alpha,
+                cost_sensitivity=args.cost_sensitivity,
+                stage1_weight=args.stage1_weight
             )
             pareto_points.append({
                 'alpha': alpha,
@@ -618,6 +674,12 @@ def main():
         output = {
             'method': selection_data.get('method', 'SCOPE'),
             'dataset': args.dataset,
+            'config': {
+                'top_k': args.top_k,
+                'similarity_power': args.similarity_power,
+                'cost_sensitivity': args.cost_sensitivity,
+                'stage1_weight': args.stage1_weight,
+            },
             'pareto_curve': pareto_points,
             'best_accuracy': max(p['accuracy'] for p in pareto_points),
             'lowest_cost': min(p['total_cost'] for p in pareto_points),
