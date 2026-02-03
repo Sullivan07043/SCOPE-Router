@@ -303,7 +303,7 @@ SCOPE uses the following HuggingFace datasets:
 
 ## Models
 
-- **SCOPE Predictor**: [Cooolder/SCOPE-CoT-RL-v3](https://huggingface.co/Cooolder/SCOPE-CoT-RL-v3) - Trained on [SCOPE-RL-data-v3](https://huggingface.co/datasets/Cooolder/SCOPE-RL-data-v3)
+- **SCOPE Predictor**: [Cooolder/SCOPE-CoT-RL-v3](https://huggingface.co/Cooolder/SCOPE-CoT-RL-v3) - Pre-trained model, ready to use
 - **Embedding Model**: [Qwen/Qwen3-Embedding-0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B)
 
 ## How It Works
