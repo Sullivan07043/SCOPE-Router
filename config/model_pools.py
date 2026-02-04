@@ -9,20 +9,25 @@ This module defines various model pools for different use cases:
 - FULL_POOL: All 13 in-distribution models
 
 Each pool contains OpenRouter model IDs and their pricing information.
+
+Pricing Configuration:
+- Pricing is loaded from config/pricing.json (if exists)
+- Users can modify pricing.json to update model costs
+- Default pricing is used as fallback
 """
 
-# OpenRouter pricing table (USD per 1M tokens)
-# Source: OpenRouter API pricing as of 2025
-PRICING = {
-    # High-cost models
+import os
+import json
+from pathlib import Path
+
+
+# Default OpenRouter pricing table (USD per 1M tokens)
+# Used as fallback if pricing.json is not found
+DEFAULT_PRICING = {
     "tngtech/deepseek-r1t2-chimera": {"input": 0.3, "output": 1.2},
     "amazon/nova-2-lite-v1": {"input": 0.3, "output": 2.5},
     "qwen/qwen3-235b-a22b": {"input": 0.18, "output": 0.54},
-    
-    # Medium-cost models
     "qwen/qwen3-14b": {"input": 0.05, "output": 0.22},
-    
-    # Low-cost models
     "openai/gpt-oss-20b": {"input": 0.03, "output": 0.14},
     "meta-llama/llama-3.3-70b-instruct": {"input": 0.1, "output": 0.32},
     "google/gemma-3-27b-it": {"input": 0.04, "output": 0.15},
@@ -33,6 +38,42 @@ PRICING = {
     "google/gemma-3-4b-it": {"input": 0.017, "output": 0.068},
     "mistralai/ministral-3b": {"input": 0.04, "output": 0.04},
 }
+
+
+def load_pricing(pricing_file: str = None) -> dict:
+    """
+    Load pricing from external JSON file or use default.
+    
+    Args:
+        pricing_file: Path to pricing.json. If None, tries to find it in config/ directory.
+    
+    Returns:
+        Pricing dictionary
+    """
+    if pricing_file is None:
+        # Try to find pricing.json in the same directory as this module
+        config_dir = Path(__file__).parent
+        pricing_file = config_dir / "pricing.json"
+    else:
+        pricing_file = Path(pricing_file)
+    
+    if pricing_file.exists():
+        try:
+            with open(pricing_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            # Filter out metadata keys (those starting with '_')
+            pricing = {k: v for k, v in data.items() if not k.startswith('_')}
+            print(f"Loaded pricing from: {pricing_file}")
+            return pricing
+        except Exception as e:
+            print(f"Warning: Failed to load {pricing_file}: {e}. Using default pricing.")
+            return DEFAULT_PRICING
+    else:
+        return DEFAULT_PRICING
+
+
+# Load pricing (can be reloaded by calling load_pricing() with a custom path)
+PRICING = load_pricing()
 
 # Mapping from short names (used in dataset) to OpenRouter IDs
 MODEL_NAME_TO_OPENROUTER_ID = {

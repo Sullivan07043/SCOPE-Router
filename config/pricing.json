@@ -1,0 +1,18 @@
+{
+    "_description": "OpenRouter pricing table (USD per 1M tokens). Users can modify this file to update pricing.",
+    "_source": "OpenRouter API pricing as of 2025",
+    
+    "tngtech/deepseek-r1t2-chimera": {"input": 0.3, "output": 1.2},
+    "amazon/nova-2-lite-v1": {"input": 0.3, "output": 2.5},
+    "qwen/qwen3-235b-a22b": {"input": 0.18, "output": 0.54},
+    "qwen/qwen3-14b": {"input": 0.05, "output": 0.22},
+    "openai/gpt-oss-20b": {"input": 0.03, "output": 0.14},
+    "meta-llama/llama-3.3-70b-instruct": {"input": 0.1, "output": 0.32},
+    "google/gemma-3-27b-it": {"input": 0.04, "output": 0.15},
+    "meta-llama/llama-3.1-8b-instruct": {"input": 0.02, "output": 0.03},
+    "google/gemma-3-12b-it": {"input": 0.03, "output": 0.1},
+    "nvidia/nemotron-nano-9b-v2": {"input": 0.04, "output": 0.16},
+    "mistralai/ministral-8b": {"input": 0.1, "output": 0.1},
+    "google/gemma-3-4b-it": {"input": 0.017, "output": 0.068},
+    "mistralai/ministral-3b": {"input": 0.04, "output": 0.04}
+}

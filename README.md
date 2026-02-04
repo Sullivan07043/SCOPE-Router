@@ -275,7 +275,8 @@ tngtech/deepseek-r1t2-chimera
 SCOPE/
 ├── config/
 │   ├── __init__.py
-│   └── model_pools.py          # Model pool definitions and pricing
+│   ├── model_pools.py          # Model pool definitions
+│   └── pricing.json            # Model pricing (user-editable)
 ├── scripts/
 │   ├── __init__.py
 │   ├── compute_similarity.py    # Query-to-anchor similarity computation
@@ -287,6 +288,27 @@ SCOPE/
 │   └── custom_queries.json      # Example custom query set
 ├── requirements.txt
 └── README.md
+```
+
+## Pricing Configuration
+
+Model pricing is stored in `config/pricing.json` and can be modified by users:
+
+```json
+{
+    "tngtech/deepseek-r1t2-chimera": {"input": 0.3, "output": 1.2},
+    "qwen/qwen3-235b-a22b": {"input": 0.18, "output": 0.54},
+    "google/gemma-3-27b-it": {"input": 0.04, "output": 0.15}
+}
+```
+
+- **input**: Cost per 1M input tokens (USD)
+- **output**: Cost per 1M output tokens (USD)
+
+You can also specify a custom pricing file:
+
+```bash
+python two_stage_routing.py --selection selection.json --similarity similarity.json --pricing_file my_pricing.json
 ```
 
 ## Default Model Pool

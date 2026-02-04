@@ -39,6 +39,7 @@ from config.model_pools import (
     OPENROUTER_ID_TO_MODEL_NAME,
     MODEL_NAME_TO_OPENROUTER_ID,
     calculate_cost,
+    load_pricing,
 )
 
 # Import from compute_similarity
@@ -496,8 +497,20 @@ def main():
         default=DEFAULT_STAGE1_WEIGHT,
         help=f"Weight for Stage I anchor calibration vs Stage II prediction (default: {DEFAULT_STAGE1_WEIGHT})"
     )
+    parser.add_argument(
+        "--pricing_file",
+        type=str,
+        default=None,
+        help="Path to custom pricing JSON file. If not provided, uses config/pricing.json or defaults."
+    )
     
     args = parser.parse_args()
+    
+    # Load custom pricing if specified
+    global PRICING
+    if args.pricing_file:
+        PRICING = load_pricing(args.pricing_file)
+        print(f"Using custom pricing from: {args.pricing_file}")
     
     print("="*70)
     print("SCOPE Two-Stage Routing")
