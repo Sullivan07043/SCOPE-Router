@@ -49,22 +49,133 @@ pip install -r requirements.txt
 
 ## Quick Start
 
-### Using Default Dataset and Model Pool
+### Default Experiment (Recommended for First-Time Users)
+
+The default experiment uses:
+- **Dataset**: `Cooolder/SCOPE-60K-final` (In-Distribution, 252 test questions)
+- **Model Pool**: DEFAULT_POOL (7 models balanced across cost tiers)
+- **SCOPE Model**: `Cooolder/SCOPE` (pre-trained, ready to use)
+
+#### Step 1: Run SCOPE Inference
+
+This step generates performance predictions for each query-model pair.
 
 ```bash
 cd scripts
 
-# Step 1: Run SCOPE inference (generates predictions for each query-model pair)
+# Create results directory
+mkdir -p results
+
+# Run SCOPE inference with default settings
 python scope_inference.py \
     --dataset id \
     --output results/selection.json \
     --similarity_output results/similarity.json
+```
 
-# Step 2: Run two-stage routing with budget constraint
+**What happens:**
+1. Loads 252 test questions from HuggingFace
+2. Computes semantic similarity between queries and 250 anchor questions
+3. For each query × 7 models = 1,764 predictions, SCOPE predicts correctness and token length
+4. Saves results to `selection.json` and `similarity.json`
+
+**Expected runtime:** ~10-15 minutes on a single GPU (T4/A10/V100)
+
+#### Step 2: Run Two-Stage Routing
+
+```bash
+# Option A: With budget constraint (recommended)
 python two_stage_routing.py \
     --selection results/selection.json \
     --similarity results/similarity.json \
-    --budget 10.0 \
+    --budget 5.0 \
+    --output results/routing_results.json
+
+# Option B: Specify alpha directly (0=low cost, 1=high accuracy)
+python two_stage_routing.py \
+    --selection results/selection.json \
+    --similarity results/similarity.json \
+    --alpha 0.5
+
+# Option C: Generate full Pareto curve (scan all alpha values)
+python two_stage_routing.py \
+    --selection results/selection.json \
+    --similarity results/similarity.json
+```
+
+### Using Different Model Pools
+
+```bash
+# Use all 13 models (FULL_POOL)
+python scope_inference.py --dataset id --pool_name full --output results/selection.json
+
+# Use reasoning-optimized pool (5 models)
+python scope_inference.py --dataset id --pool_name reasoning --output results/selection.json
+
+# Use low-budget pool (5 models)
+python scope_inference.py --dataset id --pool_name low_budget --output results/selection.json
+```
+
+**Available model pools:**
+| Pool Name | Models | Description |
+|-----------|--------|-------------|
+| `default` | 7 | Balanced across cost tiers (recommended) |
+| `full` | 13 | All in-distribution models |
+| `reasoning` | 5 | Optimized for complex reasoning tasks |
+| `high_budget` | 4 | Premium models for maximum accuracy |
+| `low_budget` | 5 | Cost-efficient models |
+
+### Routing with Filtered Model Pool
+
+If your `selection.json` contains 13 models but you want to route with only 7:
+
+```bash
+python two_stage_routing.py \
+    --selection results/selection.json \
+    --similarity results/similarity.json \
+    --pool_name default \
+    --budget 5.0
+```
+
+### Google Colab Quick Start
+
+```python
+# Mount Google Drive
+from google.colab import drive
+drive.mount('/content/drive')
+
+# Clone repository (first time only)
+%cd /content/drive/MyDrive
+!git clone https://github.com/Sullivan07043/SCOPE.git
+
+# Or update existing repository
+%cd /content/drive/MyDrive/SCOPE
+!git pull origin main
+
+# Install dependencies
+!pip install vllm transformers datasets torch numpy tqdm requests huggingface_hub -q
+
+# Set cache directory (optional, saves to Drive)
+import os
+os.environ['HF_HOME'] = '/content/drive/MyDrive/hf_cache'
+os.environ['TRANSFORMERS_CACHE'] = '/content/drive/MyDrive/hf_cache'
+
+# Run default experiment
+%cd /content/drive/MyDrive/SCOPE/scripts
+!mkdir -p results
+
+# Step 1: SCOPE Inference
+!python scope_inference.py \
+    --dataset id \
+    --output results/selection.json \
+    --similarity_output results/similarity.json \
+    --cache_dir /content/drive/MyDrive/hf_cache
+
+# Step 2: Two-Stage Routing
+!python two_stage_routing.py \
+    --selection results/selection.json \
+    --similarity results/similarity.json \
+    --budget 5.0 \
     --output results/routing_results.json
 ```
 
@@ -105,18 +216,20 @@ python scope_inference.py \
 | Argument | Description | Default |
 |----------|-------------|---------|
 | `--dataset` | Dataset type: `id` (in-distribution) or `ood` (out-of-distribution) | `id` |
+| `--pool_name` | Predefined model pool: `default`, `full`, `reasoning`, `high_budget`, `low_budget` | `default` |
 | `--query_file` | Custom query JSON file | None |
-| `--model_pool` | Custom model pool file (txt) | None (uses DEFAULT_POOL) |
+| `--model_pool` | Custom model pool file (txt), overrides `--pool_name` | None |
 | `--anchor_dir` | Directory with custom anchor results | None |
 | `--output` | Output selection JSON file | `results/selection.json` |
 | `--similarity_output` | Save similarity results | None |
+| `--cache_dir` | Directory for caching HuggingFace models/data | None |
 | `--tensor_parallel` | Number of GPUs for VLLM | 1 |
 | `--limit` | Limit questions for testing | None |
-| `--scope_model` | SCOPE predictor model | `Cooolder/SCOPE-CoT-RL-v3` |
+| `--scope_model` | SCOPE predictor model | `Cooolder/SCOPE` |
 | `--num_anchor_examples` | Number of anchor examples in prompt | 5 |
 | `--top_k_similarity` | Top-K similar anchors to consider | 10 |
-| `--max_new_tokens` | Maximum tokens to generate | 2048 |
-| `--temperature` | Sampling temperature | 0.7 |
+| `--max_new_tokens` | Maximum tokens to generate | 1536 |
+| `--temperature` | Sampling temperature | 0.2 |
 
 ### 2. Two-Stage Routing (`two_stage_routing.py`)
 
@@ -148,10 +261,12 @@ python two_stage_routing.py \
 | `--similarity` | Similarity JSON from scope_inference.py | Required |
 | `--budget` | Total budget in USD (auto-selects optimal alpha) | None |
 | `--alpha` | Trade-off parameter: 0=cost-focused, 1=accuracy-focused | None |
+| `--pool_name` | Filter to use only models from this pool | None (use all) |
 | `--dataset` | Dataset type for anchor data | `id` |
 | `--output` | Output routing results JSON | `routing_results.json` |
+| `--pricing_file` | Custom pricing JSON file | None |
 | `--alpha_steps` | Number of alpha values to search | 101 |
-| `--top_k` | Number of anchor questions for Stage I | 10 |
+| `--top_k` | Number of anchor questions for Stage I | 6 |
 | `--similarity_power` | Power for similarity weighting | 2.0 |
 | `--cost_sensitivity` | Cost sensitivity parameter | 2.0 |
 | `--stage1_weight` | Weight for Stage I vs Stage II | 0.3 |
@@ -334,7 +449,7 @@ SCOPE uses the following HuggingFace datasets:
 
 ## Models
 
-- **SCOPE Predictor**: [Cooolder/SCOPE-CoT-RL-v3](https://huggingface.co/Cooolder/SCOPE-CoT-RL-v3) - Pre-trained model, ready to use
+- **SCOPE Predictor**: [Cooolder/SCOPE](https://huggingface.co/Cooolder/SCOPE) - Pre-trained model (based on Qwen3-4B), ready to use
 - **Embedding Model**: [Qwen/Qwen3-Embedding-0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B)
 
 ## How It Works
