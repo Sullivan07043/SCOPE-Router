@@ -431,7 +431,7 @@ def run_vllm_inference(
         trust_remote_code=True,
         dtype="bfloat16",
         max_model_len=8192,
-        gpu_memory_utilization=0.90,
+        gpu_memory_utilization=0.80,  # Lower to accommodate other GPU processes
         enforce_eager=True,  # Disable CUDA Graph for better compatibility
     )
     
