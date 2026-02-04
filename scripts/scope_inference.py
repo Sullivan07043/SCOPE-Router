@@ -68,7 +68,7 @@ DEFAULT_SCOPE_MODEL = "Cooolder/SCOPE-CoT-RL-v3"
 DEFAULT_NUM_ANCHOR_EXAMPLES = 5  # Number of anchor examples in prompt
 DEFAULT_TOP_K_SIMILARITY = 10    # Top-K similar anchors to consider
 DEFAULT_MAX_NEW_TOKENS = 1536
-DEFAULT_TEMPERATURE = 0.6
+DEFAULT_TEMPERATURE = 0.2
 
 
 def load_custom_queries(filepath: str) -> List[Dict]:
