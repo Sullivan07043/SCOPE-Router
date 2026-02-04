@@ -35,6 +35,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config.model_pools import (
     DEFAULT_POOL,
+    AVAILABLE_POOLS,
+    get_pool,
     PRICING,
     OPENROUTER_ID_TO_MODEL_NAME,
     MODEL_NAME_TO_OPENROUTER_ID,
@@ -503,6 +505,13 @@ def main():
         default=None,
         help="Path to custom pricing JSON file. If not provided, uses config/pricing.json or defaults."
     )
+    parser.add_argument(
+        "--pool_name", "-p",
+        type=str,
+        default=None,
+        choices=["default", "full", "reasoning", "high_budget", "low_budget"],
+        help="Filter routing to use only models from this pool. If not set, uses all models in selection file."
+    )
     
     args = parser.parse_args()
     
@@ -520,6 +529,21 @@ def main():
     
     # Load selection data
     selection_data = load_selection_data(args.selection)
+    
+    # Filter models if pool_name is specified
+    if args.pool_name:
+        pool = get_pool(args.pool_name)
+        pool_short_names = set()
+        for model_id in pool:
+            short_name = OPENROUTER_ID_TO_MODEL_NAME.get(model_id, model_id.split('/')[-1])
+            pool_short_names.add(short_name)
+        
+        # Filter all_models in each question
+        for q in selection_data['questions']:
+            q['all_models'] = [m for m in q['all_models'] if m['model'] in pool_short_names]
+        
+        print(f"Filtering to {args.pool_name.upper()} pool ({len(pool_short_names)} models)")
+        print(f"  Models: {sorted(pool_short_names)}")
     
     # Load or compute similarity data
     if args.similarity:
