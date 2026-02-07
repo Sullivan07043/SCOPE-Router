@@ -71,11 +71,6 @@
       display: inline-block;
     }
 
-    .publication-body img {
-      max-width: 100%;
-      height: auto;
-    }
-
     pre {
       background-color: #f5f5f5;
       padding: 1rem;
@@ -91,10 +86,27 @@
       margin-left: 1.5rem;
     }
 
-    /* Section title styling - matching VL-Rethinker */
+    /* Major section title with gray bar background */
+    .major-title-wrapper {
+      background-color: #f5f5f5;
+      padding: 1rem 0;
+      margin: 2rem 0 1.5rem 0;
+      width: 100%;
+    }
+
+    .major-title {
+      font-family: 'Google Sans', sans-serif;
+      font-size: 3rem;
+      font-weight: 700;
+      text-align: center;
+      margin: 0;
+      color: #363636;
+    }
+
+    /* Regular section title */
     .section-title {
       font-family: 'Google Sans', sans-serif;
-      font-size: 2rem;
+      font-size: 1.75rem;
       font-weight: 600;
       text-align: center;
       margin-bottom: 1.5rem;
@@ -102,34 +114,38 @@
 
     .subsection-title {
       font-family: 'Google Sans', sans-serif;
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       font-weight: 500;
       text-align: center;
       margin-bottom: 1rem;
       margin-top: 2rem;
     }
 
-    /* Gray divider section */
-    .hero.is-light {
-      background-color: #f5f5f5;
+    /* Image styling with rounded corners and shadow */
+    .figure-image {
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      background-color: #fafafa;
+      padding: 10px;
     }
 
     .figure-caption {
       text-align: center;
       font-size: 14px;
       color: #666;
-      margin-top: 10px;
+      margin-top: 12px;
       font-style: italic;
     }
 
-    .content-image {
-      display: block;
-      margin: 0 auto;
-      max-width: 100%;
+    .image-container {
+      margin: 2rem 0;
     }
 
-    .image-container {
-      margin: 1.5rem 0;
+    .content-section {
+      padding: 2rem 0;
     }
   </style>
 </head>
@@ -211,13 +227,11 @@
 </section>
 
 <!-- News Section -->
-<section class="hero is-light">
-  <div class="hero-body">
-    <div class="container is-max-desktop">
-      <h2 class="section-title">🔔 News</h2>
-      <div class="content has-text-centered">
-        <p><strong>🔥[2026-01-29] Our paper <a href="https://arxiv.org/abs/2601.22323">SCOPE</a>, <a href="https://github.com/Sullivan07043/SCOPE">Code</a> and <a href="https://huggingface.co/Cooolder/SCOPE">Models</a> are out 🚀.</strong></p>
-      </div>
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="section-title">🔔 News</h2>
+    <div class="content has-text-centered">
+      <p><strong>🔥[2026-01-29] Our paper <a href="https://arxiv.org/abs/2601.22323">SCOPE</a>, <a href="https://github.com/Sullivan07043/SCOPE">Code</a> and <a href="https://huggingface.co/Cooolder/SCOPE">Models</a> are out 🚀.</strong></p>
     </div>
   </div>
 </section>
@@ -237,49 +251,48 @@
   </div>
 </section>
 
-<!-- SCOPE Overview Section -->
-<section class="hero is-light">
-  <div class="hero-body">
-    <div class="container is-max-desktop">
-      <h2 class="section-title">SCOPE</h2>
+<!-- SCOPE Major Title with Gray Bar -->
+<div class="major-title-wrapper">
+  <h1 class="major-title">SCOPE</h1>
+</div>
 
-      <h3 class="subsection-title">Overview</h3>
-      <div class="content">
-        <p>
-          Traditional routers memorize which model to use for each type of question. SCOPE takes a fundamentally different approach: instead of memorizing model assignments, it <strong>reasons about model behaviors</strong> by analyzing how models have performed on similar questions in the past. This enables SCOPE to:
-        </p>
-        <ul>
-          <li>Work with any model, including those never seen during training</li>
-          <li>Adapt to any budget constraint at inference time</li>
-          <li>Provide controllable trade-offs between accuracy and cost</li>
-        </ul>
-      </div>
+<!-- Overview Section -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="section-title">Overview</h2>
+    <div class="content">
+      <p>
+        Traditional routers memorize which model to use for each type of question. SCOPE takes a fundamentally different approach: instead of memorizing model assignments, it <strong>reasons about model behaviors</strong> by analyzing how models have performed on similar questions in the past. This enables SCOPE to:
+      </p>
+      <ul>
+        <li>Work with any model, including those never seen during training</li>
+        <li>Adapt to any budget constraint at inference time</li>
+        <li>Provide controllable trade-offs between accuracy and cost</li>
+      </ul>
+    </div>
 
-      <div class="image-container">
-        <img src="static/images/main_overview.png" alt="SCOPE Main Overview" class="content-image">
-        <p class="figure-caption">Main overview of the SCOPE framework and its key components.</p>
-      </div>
+    <div class="image-container">
+      <img src="static/images/main_overview.png" alt="SCOPE Main Overview" class="figure-image">
+      <p class="figure-caption">Main overview of the SCOPE framework and its key components.</p>
+    </div>
 
-      <div class="content">
-        <p>
-          SCOPE operates in three stages: (1) <strong>Fingerprint Construction</strong> - retrieving similar questions from an anchor bank to construct a model fingerprint; (2) <strong>Performance Prediction</strong> - using chain-of-thought reasoning to predict correctness and token length; (3) <strong>Decision & Calibration</strong> - combining predictions with anchor-based calibration to select the optimal model.
-        </p>
-      </div>
+    <div class="content">
+      <p>
+        SCOPE operates in three stages: (1) <strong>Fingerprint Construction</strong> - retrieving similar questions from an anchor bank to construct a model fingerprint; (2) <strong>Performance Prediction</strong> - using chain-of-thought reasoning to predict correctness and token length; (3) <strong>Decision & Calibration</strong> - combining predictions with anchor-based calibration to select the optimal model.
+      </p>
+    </div>
 
-      <div class="image-container">
-        <img src="static/images/pipeline_overview.png" alt="SCOPE Pipeline" class="content-image">
-        <p class="figure-caption">Detailed pipeline showing the three-stage routing process of SCOPE.</p>
-      </div>
+    <div class="image-container">
+      <img src="static/images/pipeline_overview.png" alt="SCOPE Pipeline" class="figure-image">
+      <p class="figure-caption">Detailed pipeline showing the three-stage routing process of SCOPE.</p>
     </div>
   </div>
 </section>
 
-<!-- Main Results Section -->
+<!-- Comparison with Individual Models -->
 <section class="section">
   <div class="container is-max-desktop">
-    <h2 class="section-title">Main Results</h2>
-
-    <h3 class="subsection-title">Comparison with Individual Models</h3>
+    <h2 class="section-title">Comparison with Individual Models</h2>
     <div class="content">
       <p>
         Experiments show that SCOPE is more than just a cost-saving tool. It flexibly adapts to user needs: it can <strong>boost accuracy by up to 25.7%</strong> when performance is the priority, or <strong>cut costs by up to 95.1%</strong> when efficiency matters most.
@@ -287,33 +300,30 @@
     </div>
 
     <div class="image-container">
-      <img src="static/images/comparison_with_individual_models.png" alt="Comparison with Individual Models" class="content-image">
+      <img src="static/images/comparison_with_individual_models.png" alt="Comparison with Individual Models" class="figure-image">
       <p class="figure-caption">SCOPE achieves a Pareto frontier that dominates individual model performance across different budget levels.</p>
     </div>
 
-    <h3 class="subsection-title">Effectiveness Comparison</h3>
     <div class="image-container">
-      <img src="static/images/effectiveness_comparison.png" alt="Effectiveness Comparison" class="content-image">
+      <img src="static/images/effectiveness_comparison.png" alt="Effectiveness Comparison" class="figure-image">
       <p class="figure-caption">Left: SCOPE vs individual models. Right: Comparison showing the importance of Chain-of-Thought reasoning.</p>
     </div>
   </div>
 </section>
 
 <!-- Performance Section -->
-<section class="hero is-light">
-  <div class="hero-body">
-    <div class="container is-max-desktop">
-      <h2 class="section-title">Performance of SCOPE</h2>
-      <div class="content">
-        <p>
-          We evaluate SCOPE under different trade-off coefficients α against baseline routers on both Test Set and OOD Set. SCOPE consistently outperforms existing routing methods including SVM Router, MLP Router, KNN Router, Graph Router, and xRouter across different settings.
-        </p>
-      </div>
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="section-title">Performance of SCOPE</h2>
+    <div class="content">
+      <p>
+        We evaluate SCOPE under different trade-off coefficients α against baseline routers on both Test Set and OOD Set. SCOPE consistently outperforms existing routing methods including SVM Router, MLP Router, KNN Router, Graph Router, and xRouter across different settings.
+      </p>
+    </div>
 
-      <div class="image-container">
-        <img src="static/images/performance-table.png" alt="Performance Table" class="content-image">
-        <p class="figure-caption">Routing performance comparison. SCOPE achieves the best PGR and Avg. Accuracy under various cost constraints.</p>
-      </div>
+    <div class="image-container">
+      <img src="static/images/performance-table.png" alt="Performance Table" class="figure-image">
+      <p class="figure-caption">Routing performance comparison. SCOPE achieves the best PGR and Avg. Accuracy under various cost constraints.</p>
     </div>
   </div>
 </section>
@@ -329,27 +339,25 @@
     </div>
 
     <div class="image-container">
-      <img src="static/images/token_savings.png" alt="Token Savings" class="content-image">
+      <img src="static/images/token_savings.png" alt="Token Savings" class="figure-image">
       <p class="figure-caption">Token savings comparison between SCOPE and test-time-scaling approaches.</p>
     </div>
   </div>
 </section>
 
 <!-- Ablation Section -->
-<section class="hero is-light">
-  <div class="hero-body">
-    <div class="container is-max-desktop">
-      <h2 class="section-title">Ablation Study</h2>
-      <div class="content">
-        <p>
-          We conduct extensive ablation studies to validate our design choices. SCOPE outperforms baseline routing strategies including random selection and highest-cost-first approaches.
-        </p>
-      </div>
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="section-title">Ablation Study</h2>
+    <div class="content">
+      <p>
+        We conduct extensive ablation studies to validate our design choices. SCOPE outperforms baseline routing strategies including random selection and highest-cost-first approaches.
+      </p>
+    </div>
 
-      <div class="image-container">
-        <img src="static/images/ablation.png" alt="Ablation Study" class="content-image">
-        <p class="figure-caption">Ablation study results showing the contribution of each component in SCOPE.</p>
-      </div>
+    <div class="image-container">
+      <img src="static/images/ablation.png" alt="Ablation Study" class="figure-image">
+      <p class="figure-caption">Ablation study results showing the contribution of each component in SCOPE.</p>
     </div>
   </div>
 </section>
@@ -367,20 +375,18 @@
 </section>
 
 <!-- Reference Section -->
-<section class="hero is-light" id="BibTeX">
-  <div class="hero-body">
-    <div class="container is-max-desktop">
-      <h2 class="section-title">Reference</h2>
-      <div class="content has-text-centered">
-        <p>If you find our work useful, please give us a cite:</p>
-      </div>
-      <pre><code>@article{cao2026scope,
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop">
+    <h2 class="section-title">Reference</h2>
+    <div class="content has-text-centered">
+      <p>If you find our work useful, please give us a cite:</p>
+    </div>
+    <pre><code>@article{cao2026scope,
     title={Models Under SCOPE: Scalable and Controllable Routing via Pre-hoc Reasoning},
     author={Cao, Qi and Zhang, Shuhao and Zhou, Ruizhe and Zhang, Ruiyi and Qin, Peijia and Xie, Pengtao},
     journal={arXiv preprint arXiv:2601.22323},
     year={2026}
 }</code></pre>
-    </div>
   </div>
 </section>
 
